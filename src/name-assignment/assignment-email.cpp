@@ -33,28 +33,10 @@ std::vector<ndn::PartialName>
 AssignmentEmail::assignName(const std::multimap<std::string, std::string>& params)
 {
   std::vector<ndn::PartialName> resultList;
-  Name result;
-  if (!m_nameFormat.empty() && params.count("email") > 0) {
-    const std::string& email = params.begin()->second;
-    auto formatIter = m_nameFormat.begin();
-    size_t emailSplit = email.rfind("@");
-    std::string domain = "." + email.substr(emailSplit + 1);
-
-    if (emailSplit != std::string::npos && emailSplit > 0) {
-      size_t domainSplit = domain.rfind(".");
-      while (domainSplit != std::string::npos) {
-        if (formatIter != m_nameFormat.end() && domain.substr(domainSplit + 1) == *formatIter) {
-          formatIter++;
-        }
-        else {
-          result.append(domain.substr(domainSplit + 1).data());
-        }
-        domain = domain.substr(0, domainSplit);
-        domainSplit = domain.rfind(".");
-      }
-      result.append(email.substr(0, emailSplit).data());
-      resultList.push_back(std::move(result));
-    }
+  if (params.count("email") > 0) {
+    Name result;
+    result.append(Name::Component(params.begin()->second));
+    resultList.push_back(std::move(result));
   }
   return resultList;
 }

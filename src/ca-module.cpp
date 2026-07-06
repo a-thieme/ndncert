@@ -170,23 +170,19 @@ CaModule::onProbe(const Interest& request)
   }
 
   // collect name assignments
-  std::vector<ndn::PartialName> availableComponents;
+  std::vector<Name> availableNames;
   for (const auto& item : m_config.nameAssignmentFuncs) {
     auto names = item->assignName(parameters);
-    availableComponents.insert(availableComponents.end(), names.begin(), names.end());
+    for (const auto& component : names) {
+      availableNames.push_back(Name(component));
+    }
   }
 
-  if (availableComponents.empty() && redirectionNames.empty()) {
+  if (availableNames.empty() && redirectionNames.empty()) {
     NDN_LOG_TRACE("Cannot generate available names");
     m_face.put(makeErrorPacket(request.getName(), ErrorCode::INVALID_PARAMETER,
                                "Cannot generate available names from parameters provided."));
     return;
-  }
-
-  std::vector<Name> availableNames;
-  availableNames.reserve(availableComponents.size());
-  for (const auto& component : availableComponents) {
-    availableNames.push_back(Name(m_config.caProfile.caPrefix).append(component));
   }
 
   Data result(request.getName());
@@ -245,22 +241,11 @@ CaModule::onNewRenewRevoke(const Interest& request, RequestType requestType)
     return;
   }
 
-  // verify identity name
-  if (!Certificate::isValidName(clientCert->getName()) ||
-      !m_config.caProfile.caPrefix.isPrefixOf(clientCert->getIdentity()) ||
-      clientCert->getIdentity().size() <= m_config.caProfile.caPrefix.size()) {
+  if (!Certificate::isValidName(clientCert->getName())) {
     NDN_LOG_ERROR("Invalid certificate name requested: " << clientCert->getName());
     m_face.put(makeErrorPacket(request.getName(), ErrorCode::NAME_NOT_ALLOWED,
                                "Invalid certificate name requested."));
     return;
-  }
-  if (m_config.caProfile.maxSuffixLength) {
-    if (clientCert->getIdentity().size() > m_config.caProfile.caPrefix.size() + *m_config.caProfile.maxSuffixLength) {
-      NDN_LOG_ERROR("Invalid certificate name requested: " << clientCert->getName());
-      m_face.put(makeErrorPacket(request.getName(), ErrorCode::NAME_NOT_ALLOWED,
-                                 "Invalid certificate name requested."));
-      return;
-    }
   }
 
   if (requestType == RequestType::NEW) {
