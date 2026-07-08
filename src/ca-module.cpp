@@ -418,6 +418,11 @@ CaModule::onChallenge(const Interest& request)
   }
 
   Block payload;
+  // Include the CA's own prefix as the forwarding hint on every CHALLENGE
+  // response so that the requester can route subsequent Interests (e.g. the
+  // issued-certificate fetch) to the CA even when the response does not
+  // carry an IssuedCertName (e.g. pending state or revoke state).
+  Name forwardingHint = m_config.caProfile.caPrefix;
   if (requestState->status == Status::PENDING) {
     NDN_LOG_TRACE("Challenge succeeded");
     if (requestState->requestType == RequestType::NEW ||
@@ -427,17 +432,17 @@ CaModule::onChallenge(const Interest& request)
       requestState->status = Status::SUCCESS;
       m_storage->deleteRequest(requestState->requestId);
       payload = challengetlv::encodeDataContent(*requestState, issuedCert.getName(),
-                                                m_config.caProfile.forwardingHint);
+                                                forwardingHint);
     }
     else if (requestState->requestType == RequestType::REVOKE) {
       // TODO: where is the code to revoke?
       requestState->status = Status::SUCCESS;
       m_storage->deleteRequest(requestState->requestId);
-      payload = challengetlv::encodeDataContent(*requestState);
+      payload = challengetlv::encodeDataContent(*requestState, Name(), forwardingHint);
     }
   }
   else {
-    payload = challengetlv::encodeDataContent(*requestState);
+    payload = challengetlv::encodeDataContent(*requestState, Name(), forwardingHint);
     m_storage->updateRequest(*requestState);
     NDN_LOG_TRACE("Challenge continues");
   }

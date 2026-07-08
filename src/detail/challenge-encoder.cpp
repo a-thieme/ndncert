@@ -54,6 +54,8 @@ encodeDataContent(ca::RequestState& request, const Name& issuedCertName, const N
   }
   if (!issuedCertName.empty()) {
     response.push_back(makeNestedBlock(tlv::IssuedCertName, issuedCertName));
+  }
+  if (!forwardingHint.empty()) {
     response.push_back(makeNestedBlock(ndn::tlv::ForwardingHint, forwardingHint));
   }
   response.encode();
