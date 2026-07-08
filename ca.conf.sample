@@ -1,5 +1,10 @@
 {
   "ca-prefix": "/example",
+  // Optional: include this Name as the forwarding hint on every CHALLENGE
+  // response so the requester can route subsequent Interests (e.g. the
+  // issued-certificate fetch) through this prefix. Leave commented/absent to
+  // omit the hint entirely.
+  // "forwarding-hint": "/example",
   "ca-info": "An example NDNCERT CA",
   "max-validity-period": "1296000",
   "max-suffix-length": "2",

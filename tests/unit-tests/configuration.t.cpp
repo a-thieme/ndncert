@@ -44,7 +44,9 @@ BOOST_AUTO_TEST_CASE(CaConfigFile)
 
   config.load("tests/unit-tests/config-files/config-ca-2");
   BOOST_CHECK_EQUAL(config.caProfile.caPrefix, "/ndn");
-  BOOST_CHECK_EQUAL(config.caProfile.forwardingHint, "/ndn/CA");
+  // config-ca-2 has no "forwarding-hint" key; the hint is opt-in, so the
+  // parsed field is empty and no ForwardingHint TLV is emitted on responses.
+  BOOST_CHECK_EQUAL(config.caProfile.forwardingHint, "");
   BOOST_CHECK_EQUAL(config.caProfile.caInfo, "missing max validity period, max suffix length, and probe");
   BOOST_CHECK_EQUAL(config.caProfile.maxValidityPeriod, time::seconds(86400));
   BOOST_CHECK(!config.caProfile.maxSuffixLength.has_value());

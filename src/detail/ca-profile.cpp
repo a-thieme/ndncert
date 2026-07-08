@@ -35,11 +35,12 @@ CaProfile::fromJson(const JsonSection& json)
   if (profile.caPrefix.empty()) {
     NDN_THROW(std::runtime_error("Cannot parse ca-prefix from the config file"));
   }
-  // Forwarding hint
+  // Forwarding hint (opt-in via config; empty when absent disables the hint).
+  // When the operator does not set "forwarding-hint", leave the field empty so
+  // that the CHALLENGE response does not carry a ForwardingHint TLV. Operators
+  // who want a hint can set it to any Name (commonly the CA's own prefix or a
+  // well-known routing prefix).
   profile.forwardingHint = Name(json.get(CONFIG_FORWARDING_HINT, ""));
-  if (profile.forwardingHint.empty()) {
-    profile.forwardingHint = Name(profile.caPrefix).append("CA");
-  }
   // CA info
   profile.caInfo = json.get(CONFIG_CA_INFO, "");
   // CA max validity period
@@ -94,6 +95,9 @@ CaProfile::toJson() const
 {
   JsonSection caItem;
   caItem.put(CONFIG_CA_PREFIX, caPrefix.toUri());
+  if (!forwardingHint.empty()) {
+    caItem.put(CONFIG_FORWARDING_HINT, forwardingHint.toUri());
+  }
   caItem.put(CONFIG_CA_INFO, caInfo);
   caItem.put(CONFIG_MAX_VALIDITY_PERIOD, maxValidityPeriod.count());
   if (maxSuffixLength) {

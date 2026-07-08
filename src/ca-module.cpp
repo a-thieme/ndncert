@@ -417,12 +417,13 @@ CaModule::onChallenge(const Interest& request)
     return;
   }
 
+  // Use the operator-configured forwarding hint (may be empty). When set,
+  // every CHALLENGE response advertises it so the requester can route
+  // subsequent Interests (e.g. the issued-certificate fetch) to the CA even
+  // when the response is in pending state or for REVOKE. When unset in the
+  // config, the field is empty and no ForwardingHint TLV is emitted.
+  const Name& forwardingHint = m_config.caProfile.forwardingHint;
   Block payload;
-  // Include the CA's own prefix as the forwarding hint on every CHALLENGE
-  // response so that the requester can route subsequent Interests (e.g. the
-  // issued-certificate fetch) to the CA even when the response does not
-  // carry an IssuedCertName (e.g. pending state or revoke state).
-  Name forwardingHint = m_config.caProfile.caPrefix;
   if (requestState->status == Status::PENDING) {
     NDN_LOG_TRACE("Challenge succeeded");
     if (requestState->requestType == RequestType::NEW ||

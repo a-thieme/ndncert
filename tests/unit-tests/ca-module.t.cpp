@@ -422,9 +422,10 @@ BOOST_AUTO_TEST_CASE(HandleChallenge)
       state.onChallengeResponse(response);
       BOOST_CHECK(state.m_status == Status::CHALLENGE);
       BOOST_CHECK_EQUAL(state.m_challengeStatus, ChallengePin::NEED_CODE);
-      // Every CHALLENGE response (even pending) carries the CA prefix as a
-      // forwarding hint so the requester can route subsequent Interests.
-      BOOST_CHECK_EQUAL(state.m_forwardingHint, Name("/ndn"));
+      // config-ca-1 sets "forwarding-hint": "/repo"; the CA emits it on every
+      // CHALLENGE response (even pending ones) so the requester can route
+      // subsequent Interests via the configured Name.
+      BOOST_CHECK_EQUAL(state.m_forwardingHint, Name("/repo"));
       auto paramList = state.selectOrContinueChallenge("pin");
       challengeInterest2 = state.genChallengeInterest(std::move(paramList));
     }
