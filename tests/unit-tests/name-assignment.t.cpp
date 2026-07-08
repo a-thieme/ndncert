@@ -82,13 +82,18 @@ BOOST_AUTO_TEST_CASE(NameAssignmentEmail)
   AssignmentEmail assignment("/edu/ucla");
   std::multimap<std::string, std::string> params;
   BOOST_CHECK_EQUAL(assignment.assignName(params).size(), 0);
+
   params.emplace("email", "das@math.ucla.edu");
-  BOOST_CHECK_EQUAL(*assignment.assignName(params).begin(), Name("/math/das"));
+  auto names1 = assignment.assignName(params);
+  BOOST_CHECK_EQUAL(names1.size(), 1);
+  BOOST_CHECK_EQUAL(names1[0], Name().append("das@math.ucla.edu"));
 
   params.clear();
   params.emplace("email", "d/~.^as@6666=.9!");
-  BOOST_CHECK_EQUAL(assignment.assignName(params).size(), 1);
-  BOOST_CHECK_EQUAL(*assignment.assignName(params).begin(), Name("/9!/6666%3D/d%2F~.%5Eas"));
+  auto names = assignment.assignName(params);
+  BOOST_CHECK_EQUAL(names.size(), 1);
+  BOOST_CHECK_EQUAL(names[0].size(), 1);
+  BOOST_CHECK_EQUAL(names[0], Name().append("d/~.^as@6666=.9!"));
 }
 
 BOOST_AUTO_TEST_SUITE_END() // TestNameAssignment

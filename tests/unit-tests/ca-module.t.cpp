@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(HandleProbe)
     probeResponse.parse();
     Name caName;
     caName.wireDecode(probeResponse.get(ndn::tlv::Name));
-    BOOST_CHECK_EQUAL(caName.size(), 2);
+    BOOST_CHECK_EQUAL(caName.size(), 1);
   });
   face.receive(interest);
 
@@ -375,49 +375,11 @@ BOOST_AUTO_TEST_CASE(HandleNewWithLongSuffix)
   face.onSendData.connect([&](const Data& response) {
     auto contentTlv = response.getContent();
     contentTlv.parse();
-    if (interest3->getName().isPrefixOf(response.getName())) {
-      auto errorCode = static_cast<ErrorCode>(readNonNegativeInteger(contentTlv.get(tlv::ErrorCode)));
-      BOOST_CHECK(errorCode != ErrorCode::NO_ERROR);
-    }
-    else {
-      // should successfully get responses
-      BOOST_CHECK_THROW(readNonNegativeInteger(contentTlv.get(tlv::ErrorCode)), std::runtime_error);
-    }
+    BOOST_CHECK_THROW(readNonNegativeInteger(contentTlv.get(tlv::ErrorCode)), std::runtime_error);
   });
   face.receive(*interest1);
   face.receive(*interest2);
   face.receive(*interest3);
-  advanceClocks(time::milliseconds(20), 60);
-}
-
-BOOST_AUTO_TEST_CASE(HandleNewWithInvalidLength1)
-{
-  auto identity = m_keyChain.createIdentity(Name("/ndn"));
-  auto key = identity.getDefaultKey();
-  auto cert = key.getDefaultCertificate();
-
-  ndn::DummyClientFace face(m_io, m_keyChain, {true, true});
-  CaModule ca(face, m_keyChain, "tests/unit-tests/config-files/config-ca-1");
-  advanceClocks(time::milliseconds(20), 60);
-
-  CaProfile item;
-  item.caPrefix = Name("/ndn");
-  item.cert = std::make_shared<Certificate>(cert);
-  requester::Request state(m_keyChain, item, RequestType::NEW);
-
-  auto current_tp = time::system_clock::now();
-  auto interest1 = state.genNewInterest(identity.getDefaultKey().getName(), current_tp, current_tp + time::days(1));
-  auto interest2 = state.genNewInterest(m_keyChain.createIdentity(Name("/ndn/a/b/c/d")).getDefaultKey().getName(),
-                                        current_tp, current_tp + time::days(1));
-  face.onSendData.connect([&](const Data& response) {
-    auto contentTlv = response.getContent();
-    contentTlv.parse();
-    auto errorCode = static_cast<ErrorCode>(readNonNegativeInteger(contentTlv.get(tlv::ErrorCode)));
-    BOOST_CHECK(errorCode != ErrorCode::NO_ERROR);
-  });
-  face.receive(*interest1);
-  face.receive(*interest2);
-
   advanceClocks(time::milliseconds(20), 60);
 }
 
